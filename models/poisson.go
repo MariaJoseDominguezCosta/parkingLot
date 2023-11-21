@@ -6,10 +6,9 @@ type Poisson struct {
 	*distuv.Poisson
 }
 
-func NewPoisson(lambda float64) *Poisson {
+func NewPoisson() *Poisson {
 	return &Poisson{
 		Poisson: &distuv.Poisson{
-			Lambda: lambda,
 		},
 	}
 }
