@@ -1,47 +1,38 @@
 package models
 
-import ("sync"
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
-)
-const SPOTS = 20
+import "errors"
 
+type ParkingSpace int
 type ParkingLot struct {
-	Spaces chan int
-	// Vehicles []Vehicle
-	// Sem      chan struct{}
-	Parking      [SPOTS]bool
-	mutex      *sync.Mutex
-	// inputQueue chan *Vehicle
-	// Spots    [SPOTS]int
+	Spaces     []*Vehicle
+	AvailSpots []int // Queue to store the indices of available parking spaces
 }
 
-func NewParkingLot(capacity chan int, m *sync.Mutex) *ParkingLot {
+func NewParkingLot(capacity ParkingSpace) (*ParkingLot) {
+	spaces := make([]*Vehicle, capacity) // Initialize the slice with nil values
+	availSpots := make([]int, capacity)
+
+	for i := 0; i < int(capacity); i++ {
+	    availSpots[i] = i
+	}
+
 	return &ParkingLot{
-		Spaces: capacity,
-		mutex:    m,
-		Parking:    [SPOTS]bool{},
+		Spaces:     spaces,
+		AvailSpots: availSpots,
 	}
 }
 
-func (p *ParkingLot) GetSpaces() chan int {
-	return p.Spaces
-}
+func (p *ParkingLot) Park(v *Vehicle) error {
+	if len(p.AvailSpots) == 0 {
+		return errors.New("parking lot is full")
+	}
 
-func (p *ParkingLot) GetMutex() *sync.Mutex {
-	return p.mutex
-}
+	// Get the first available spot from the queue
+	spotIndex := p.AvailSpots[0]
+	p.AvailSpots = p.AvailSpots[1:]
 
-func (p *ParkingLot) GetParking() [SPOTS]bool {
-	return p.Parking
-}
+	// Park the vehicle in the selected spot
+	p.Spaces[spotIndex] = v
 
-func (p *ParkingLot) SetParking(parking [SPOTS]bool) {
-	p.Parking = parking
-}
-
-func (p *ParkingLot) Exit(carsC *fyne.Container, carI *canvas.Image) {
-	carI.Move(fyne.NewPos(205, 350))
-	carsC.Add(carI)
-	carsC.Refresh()
+	return nil
 }
