@@ -6,7 +6,7 @@ import (
 	"parkingLot/views"
 
 	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/ebitenutil"
 )
 
 var (

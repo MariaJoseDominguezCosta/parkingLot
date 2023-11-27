@@ -19,12 +19,11 @@ func NewVehicle(id int) *Vehicle {
 
 // Enter attempts to enter the parking lot. It will block if there is no available space.
 func (v *Vehicle) Enter(p *ParkingLot) {
-	p.Semaphore <- v.ID  // Block if there is no available space.
-	time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)  // Stay for a random amount of time.
+	p.Semaphore <- v.ID                                          // Block if there is no available space.
+	time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Stay for a random amount of time.
 }
 
 // Leave leaves the parking lot, freeing up a space.
 func (v *Vehicle) Leave(p *ParkingLot) {
-	<-p.Semaphore  // Release the parking space.
+	<-p.Semaphore // Release the parking space.
 }
-
