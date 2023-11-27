@@ -3,59 +3,44 @@ package controllers
 import (
 	"math/rand"
 	"parkingLot/models"
+	"sync"
 	"time"
 )
 
+// VehicleController struct controls the vehicles.
 type VehicleController struct {
-	Vehicle *models.Vehicle
-	stopCh  chan struct{} // Channel to stop the goroutine
+	vehicles []*models.Vehicle
 }
 
-func NewVehicleController(v *models.Vehicle) *VehicleController {
+// NewVehicleController creates a new vehicle controller.
+func NewVehicleController() *VehicleController {
 	return &VehicleController{
-		Vehicle: v,
-		stopCh:  make(chan struct{}),
+		vehicles: make([]*models.Vehicle, 0),
 	}
 }
 
-func (vc *VehicleController) Drive(p *models.ParkingLot) {
-	go func() {
-		for {
-			// Check if stop signal is received
-			select {
-			case <-vc.stopCh:
-				return
-			default:
-			}
-
-			// Simulate the arrival of vehicles according to a Poisson distribution
-			waitTime := rand.ExpFloat64() * 10
-			time.Sleep(time.Duration(waitTime) * time.Millisecond)
-
-			// Try to park the vehicle in the first available space
-			for i, space := range p.Spaces {
-				if space == nil {
-					// Park the vehicle
-					p.Spaces[i] = vc.Vehicle
-					vc.Vehicle.Parked = true
-					parkingView.Update() // Update the view
-
-					// Simulate the stay of the vehicle.
-					parkingDuration := time.Duration(rand.Intn(20)) * time.Second
-					time.Sleep(parkingDuration)
-
-					// The vehicle leaves the parking lot
-					p.Spaces[i] = nil
-					vc.Vehicle.Parked = false
-					parkingView.Update() // Update the view
-					break
-				}
-			}
-		}
-	}()
+// CreateVehicles creates the specified number of vehicles.
+func (vc *VehicleController) CreateVehicles(numVehicles int) {
+	for i := 0; i < numVehicles; i++ {
+		vc.vehicles = append(vc.vehicles, models.NewVehicle(i))
+	}
 }
 
-func (vc *VehicleController) Stop() {
-	// Send stop signal to the goroutine
-	vc.stopCh <- struct{}{}
+// StartSimulation starts the simulation of vehicles entering and leaving the parking lot.
+// VehicleController.go
+func (vc *VehicleController) StartSimulation(p *models.ParkingLot) {
+	var wg sync.WaitGroup
+	for _, v := range vc.vehicles {
+		wg.Add(1)
+		go func(v *models.Vehicle) {
+			defer wg.Done()
+			for {
+				v.Enter(p)
+				time.AfterFunc(time.Duration(rand.ExpFloat64()*1500)*time.Millisecond, func() {
+					v.Leave(p)
+				})
+			}
+		}(v)
+	}
+	wg.Wait()
 }

@@ -2,67 +2,36 @@
 package views
 
 import (
-	"fmt"
-	"parkingLot/controllers"
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/widget"
+    "github.com/hajimehoshi/ebiten"
+    "parkingLot/controllers"
 )
 
-type ParkingView struct {
-	App              fyne.App
-	Window           fyne.Window
-	ParkingController *controllers.ParkingController
-	Spaces           []*canvas.Rectangle
-	Vehicles         []*canvas.Image
+type ParkingLotView struct {
+    parkingLotController *controllers.ParkingLotController
 }
 
-func NewParkingView(pc *controllers.ParkingController) *ParkingView {
-	a := app.New()
-	w := a.NewWindow("Parking Lot")
-
-	return &ParkingView{
-		App:               a,
-		Window:            w,
-		ParkingController: pc,
-		Spaces:            make([]*canvas.Rectangle, len(pc.ParkingLot.Spaces)),
-		Vehicles:          make([]*canvas.Image, 100), // Assuming a maximum of 100 vehicles
-	}
+func NewParkingLotView(plc *controllers.ParkingLotController) *ParkingLotView {
+    return &ParkingLotView{
+        parkingLotController: plc,
+    }
 }
 
-func (pv *ParkingView) Show() error {
-	c := container.NewVBox()
+func (plv *ParkingLotView) Update(screen *ebiten.Image) error {
+    parkingLot := plv.parkingLotController.GetParkingLot()
+    for i:= range parkingLot.Semaphore {
+        opts := &ebiten.DrawImageOptions{}
+        // Calculate x and y based on the vehicle's position.
+        x := float64((i % 10) * 60 + 30)
+        y := float64((i / 10) * 60 + 30)
+        opts.GeoM.Translate(x, y)
 
-	for _, v := range pv.ParkingController.ParkingLot.Spaces {
-		if v != nil {
-			c.Add(v.Image)
-			c.Add(widget.NewLabel(fmt.Sprintf("Vehicle %d", v.Id)))
-		} else {
+        if i == 0 {  // Vehicle is leaving.
+            screen.DrawImage(cOutImage, opts)
+        } else {  // Vehicle is entering.
+            screen.DrawImage(cImage, opts)
+        }
+    }
 
-			c.Add(widget.NewLabel("Empty Space"))
-		}
-	}
-
-	pv.Window.SetContent(c)
-	pv.Window.ShowAndRun()
-
-	return nil
+    return nil
 }
 
-func (pv *ParkingView) Update() {
-	c := container.NewVBox()
-
-	for _, v := range pv.ParkingController.ParkingLot.Spaces {
-		if v != nil {
-			c.Add(v.Image)
-			c.Add(widget.NewLabel(fmt.Sprintf("Vehicle %d", v.Id)))
-		} else {
-			c.Add(widget.NewLabel("Empty Space"))
-		}
-	}
-
-	pv.Window.SetContent(c)
-	pv.Window.Refresh()
-}

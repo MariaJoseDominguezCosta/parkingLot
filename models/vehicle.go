@@ -1,35 +1,30 @@
 package models
 
 import (
-	"errors"
 	"math/rand"
 	"time"
-
-	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/storage"
 )
 
-type VehicleId int
+// Vehicle struct represents a vehicle in the parking lot.
 type Vehicle struct {
-	Id              VehicleId
-	Image           *canvas.Image
-	ParkingDuration time.Duration
-	Space           int
-	Parked          bool
+	ID int
 }
 
-func NewVehicle(id VehicleId, imagePath string) (*Vehicle, error) {
-
-	image := canvas.NewImageFromURI(storage.NewFileURI(imagePath))
-	parkingDuration := time.Duration(10+rand.Intn(20)) * time.Second
-	if id < 0 {
-		return nil, errors.New("id cannot be negative")
-	}
+// NewVehicle creates a new vehicle with the given id.
+func NewVehicle(id int) *Vehicle {
 	return &Vehicle{
-		Id:              id,
-		ParkingDuration: parkingDuration,
-		Image:           image,
-		Space:           0,
-		Parked:          false,
-	}, nil
+		ID: id,
+	}
 }
+
+// Enter attempts to enter the parking lot. It will block if there is no available space.
+func (v *Vehicle) Enter(p *ParkingLot) {
+	p.Semaphore <- v.ID  // Block if there is no available space.
+	time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)  // Stay for a random amount of time.
+}
+
+// Leave leaves the parking lot, freeing up a space.
+func (v *Vehicle) Leave(p *ParkingLot) {
+	<-p.Semaphore  // Release the parking space.
+}
+

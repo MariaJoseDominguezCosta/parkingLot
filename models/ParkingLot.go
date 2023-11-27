@@ -1,38 +1,15 @@
 package models
 
-import "errors"
-
-type ParkingSpace int
+// ParkingLot struct represents the parking lot.
 type ParkingLot struct {
-	Spaces     []*Vehicle
-	AvailSpots []int // Queue to store the indices of available parking spaces
+	Capacity  int
+	Semaphore chan int
 }
 
-func NewParkingLot(capacity ParkingSpace) (*ParkingLot) {
-	spaces := make([]*Vehicle, capacity) // Initialize the slice with nil values
-	availSpots := make([]int, capacity)
-
-	for i := 0; i < int(capacity); i++ {
-	    availSpots[i] = i
-	}
-
+// NewParkingLot creates a new parking lot with the given capacity.
+func NewParkingLot(capacity int) *ParkingLot {
 	return &ParkingLot{
-		Spaces:     spaces,
-		AvailSpots: availSpots,
+		Capacity:  capacity,
+		Semaphore: make(chan int, capacity),  // Buffered channel used as a semaphore.
 	}
-}
-
-func (p *ParkingLot) Park(v *Vehicle) error {
-	if len(p.AvailSpots) == 0 {
-		return errors.New("parking lot is full")
-	}
-
-	// Get the first available spot from the queue
-	spotIndex := p.AvailSpots[0]
-	p.AvailSpots = p.AvailSpots[1:]
-
-	// Park the vehicle in the selected spot
-	p.Spaces[spotIndex] = v
-
-	return nil
 }

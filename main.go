@@ -3,28 +3,47 @@ package main
 import (
 	"log"
 	"parkingLot/controllers"
-	"parkingLot/models"
-	"parkingLot/scenes"
 	"parkingLot/views"
+
+	"github.com/hajimehoshi/ebiten"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
+var (
+	carInImage  *ebiten.Image
+	carOutImage *ebiten.Image
+)
+
+func init() {
+	var err error
+
+	// Load the car in image file
+	carInImage, _, err = ebitenutil.NewImageFromFile("assets/car.png")
+	if err != nil {
+		log.Fatalf("reading car in image file: %v", err)
+	}
+
+	// Load the car out image file
+	carOutImage, _, err = ebitenutil.NewImageFromFile("assets/car_out.png")
+	if err != nil {
+		log.Fatalf("reading car out image file: %v", err)
+	}
+}
+
 func main() {
-	// Create a new parking lot with a capacity of 20
-	parkingLot := models.NewParkingLot(20)
-	if parkingLot == nil {
-		log.Fatal("Failed to create parking lot")
-	}
+	// Create a new parking lot controller with a capacity of 20.
+	plc := controllers.NewParkingLotController(20)
 
-	parkingController := controllers.NewParkingController(parkingLot)
-	parkingView := views.NewParkingView(parkingController)
+	// Create a new vehicle controller and create 100 vehicles.
+	vc := controllers.NewVehicleController()
+	vc.CreateVehicles(100)
 
-	// Start the simulation
-	if err := scenes.NewParkingScene(parkingView.Window).Start(); err != nil {
-		log.Fatal("Failed to start simulation:", err)
-	}
+	// Start the simulation of vehicles entering and leaving the parking lot.
+	vc.StartSimulation(plc.GetParkingLot())
 
-	// Show the parking lot
-	if err := parkingView.Show(); err != nil {
-		log.Fatal("Failed to show parking lot:", err)
-	}
+	// Create a new parking lot view.
+	plv := views.NewParkingLotView(plc)
+
+	// Start the Ebiten game loop.
+	ebiten.RunGame(plv)
 }
